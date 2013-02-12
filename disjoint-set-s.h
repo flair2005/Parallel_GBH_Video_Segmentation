@@ -33,7 +33,7 @@ public:
   universe_s(int elements);
   ~universe_s();
   int find(int x);  
-  void join(int x, int y, float mst);
+  int join(int x, int y, float mst);
   int size(int x) const { return elts[x].size; }
   int rank(int x) const { return elts[x].rank; }
   float mst(int x) const { return elts[x].mst; }
@@ -67,7 +67,7 @@ int universe_s::find(int x) {
   return y;
 }
 
-void universe_s::join(int x, int y, float mst) {
+int universe_s::join(int x, int y, float mst) {
   mst = max(max(elts[x].mst, elts[y].mst), mst);
   if (elts[x].rank > elts[y].rank) {
     elts[y].p = x;
@@ -81,6 +81,8 @@ void universe_s::join(int x, int y, float mst) {
       elts[y].rank++;
   }
   num--;
+
+  return 0;
 }
 
 #endif

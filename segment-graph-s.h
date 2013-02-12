@@ -24,16 +24,16 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 #include "disjoint-set-s.h"
 #include <sys/time.h>
 #include <iostream>
-
+#include "edges.h"
 // threshold function
 #define THRESHOLD(size, c) (c/size)
-
+/*
 typedef struct {
   float w;
   int a, b;
 } edge_s;
-
-bool operator<(const edge_s &a, const edge_s &b) {
+*/
+bool operator<(const edge &a, const edge &b) {
   return a.w < b.w;
 }
 
@@ -47,9 +47,10 @@ bool operator<(const edge_s &a, const edge_s &b) {
  * edges: array of edges.
  * c: constant for treshold function.
  */
-universe_s *segment_graph_s(int num_vertices, int num_edges, edge_s *edges, 
-			float c) { 
-    
+universe_s *segment_graph_s(int num_vertices, int num_edges, edge *edges, 
+			float c, vector<edge>* edges_remain) { 
+  // new vector containing remain edges
+  edges_remain->clear();
   // sort edges by weight
   std::sort(edges, edges + num_edges);
 
@@ -63,7 +64,7 @@ universe_s *segment_graph_s(int num_vertices, int num_edges, edge_s *edges,
 
   // for each edge, in non-decreasing weight order...
   for (int i = 0; i < num_edges; i++) {
-    edge_s *pedge = &edges[i];
+    edge *pedge = &edges[i];
     
     // components conected by this edge
     int a = u->find(pedge->a);
@@ -71,10 +72,12 @@ universe_s *segment_graph_s(int num_vertices, int num_edges, edge_s *edges,
     if (a != b) {
       if ((pedge->w <= threshold[a]) &&
 	  (pedge->w <= threshold[b])) {
-	u->join(a, b, pedge->w);
+	if (u->join(a, b, pedge->w) == 1)
+          edges_remain->push_back(*pedge);
 	a = u->find(a);
 	threshold[a] = pedge->w + THRESHOLD(u->size(a), c);
       }
+      else edges_remain->push_back(*pedge);
     }
   }
 
