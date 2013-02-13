@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 			status = -1;
 		}
 	}
-	for (int i = 0; i <= hie_num; i++) {
+	for (int i = 0; i <= (hie_num+1); i++) {
   		snprintf(savepath,1023,"%s/%02d",output_path,i);
 		if (stat(savepath, &st) != 0) {
 			/* Directory does not exist */
@@ -113,6 +113,10 @@ int main(int argc, char **argv) {
 	int time_task;
 	Start_t = time(NULL);
 
+//	struct timeval tim;  
+//        gettimeofday(&tim, NULL);  
+//        double t1=tim.tv_sec+(tim.tv_usec/1000000.0); 
+
 	// Read Frames
 	for (int i = 0; i < frame_num; i++) {
 		snprintf(filepath, 1023, "%s/%05d.ppm", input_path, i + 1);
@@ -132,6 +136,10 @@ int main(int argc, char **argv) {
 	myfile.open(timefile);
 	myfile << time_task << endl;
 	myfile.close();
+
+//	gettimeofday(&tim, NULL);  
+//        double t2=tim.tv_sec+(tim.tv_usec/1000000.0);  
+//        printf("%.6lf seconds elapsed\n", t2-t1);
 
 	printf("Congratulations! It's done!\n");
 	printf("Time_total = %d seconds\n", time_task);
