@@ -41,6 +41,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 #include "segment-graph-multi.h"
 #include "disjoint-set.h"
 
+#define num_cores 8
+
 using namespace std;
 
 /* Gaussian Smoothing */
@@ -151,10 +153,10 @@ void segment_image(char *path, image<rgb> *im[], int num_frame, float c,
 	printf("start build edges\n");
 	edge* edges = new edge[num_edges];
 	initialize_edges(edges, num_frame, width, height, smooth_r, smooth_g,
-			smooth_b);
+			smooth_b, 0);
 	printf("end build edges\n");
 	// ------------------------------------------------------------------
-
+	printf("The edges' number is %d.\n", num_edges);
 	// step 4 -- build nodes
 	printf("start build nodes\n");
 	universe* mess = new universe(num_frame, width, height, smooth_r, smooth_g,
@@ -166,7 +168,7 @@ void segment_image(char *path, image<rgb> *im[], int num_frame, float c,
 	printf("start over-segmentation\n");
 	edges_region[0] = new vector<edge>();
 	segment_graph(mess, edges_region[0], edges, c, width, height, 0,
-                      smooth_r, smooth_g, smooth_b, 10);
+                      smooth_r, smooth_g, smooth_b, num_frame/num_cores);
 	// optional merging small components
 /*	for (int i = 0; i < num_edges; i++) {
 		int a = mess->find_in_level(edges[i].a, 0);
