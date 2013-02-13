@@ -47,13 +47,7 @@ rgb random_rgb() {
         c.b = (uchar) random();
         return c;
 }
-/*
-bool operator<(const edge &a, const edge &b) {
 
-	return a.w < b.w;
-
-}
-*/
 // dissimilarity measure between pixels
 static inline float diff(image<float> *r, image<float> *g, image<float> *b,
                          int x1, int y1, int x2, int y2) {
@@ -63,41 +57,16 @@ static inline float diff(image<float> *r, image<float> *g, image<float> *b,
 }
 
 // process every image with graph-based segmentation
-void gb(universe *mess, image<float> *smooth_r, image<float> *smooth_g, image<float> *smooth_b,
+void gb(universe *mess, image<float> *smooth_r[], image<float> *smooth_g[], image<float> *smooth_b[],
         int width, int height, edge *edges, float c, int s_index, int e_index, int level, 
-        vector<edge>* edges_remain, int num) {
+        vector<edge>* edges_remain, int num_edges, int num_frame) {
   //int num = 0;
-  //  edge_s *edges = new edge_s[width*height*4];
-  for (int y = 0; y < height; y++) {
-    for (int x = 0; x < width; x++) {
-      if (x < width-1) {
-        edges[num].a = y * width + x;
-        edges[num].b = y * width + (x+1);
-        edges[num].w = diff(smooth_r, smooth_g, smooth_b, x, y, x+1, y);
-        num++;
-      }
-      if (y < height-1) {
-        edges[num].a = y * width + x;
-        edges[num].b = (y+1) * width + x;
-        edges[num].w = diff(smooth_r, smooth_g, smooth_b, x, y, x, y+1);
-        num++;
-      }
-      if ((x < width-1) && (y < height-1)) {
-        edges[num].a = y * width + x;
-        edges[num].b = (y+1) * width + (x+1);
-        edges[num].w = diff(smooth_r, smooth_g, smooth_b, x, y, x+1, y+1);
-        num++;
-      }
-      if ((x < width-1) && (y > 0)) {
-        edges[num].a = y * width + x;
-        edges[num].b = (y-1) * width + (x+1);
-        edges[num].w = diff(smooth_r, smooth_g, smooth_b, x, y, x+1, y-1);
-        num++;
-      }
-    }
-  }
+  // ----- node number
+  int num_vertices = num_frame * width * height;
+//  edge_s *edges = new edge_s[width*height*4];
+  initialize_edges(edges, num_frame, width, height, smooth_r, smooth_g, smooth_b);
 
-  universe_s *u = segment_graph_s(width*height, num, edges, c, edges_remain);
+  universe_s *u = segment_graph_s(num_vertices, num_edges, edges, c, edges_remain);
  
   for (int i = s_index; i < e_index; ++i) 
     mess->set_in_level(i, level, u->find(i-s_index), u->rank(i-s_index), u->size(i-s_index), u->mst(i-s_index)); 
@@ -105,9 +74,8 @@ void gb(universe *mess, image<float> *smooth_r, image<float> *smooth_g, image<fl
 
 
 /* pixel level minimum spanning tree merge */
-void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges, 
-		int num_edges, float c, int width, int height, int level,
-                image<float> *smooth_r[], image<float> *smooth_g[], image<float> *smooth_b[]) {
+void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges, float c, int width, int height, int level,
+                image<float> *smooth_r[], image<float> *smooth_g[], image<float> *smooth_b[], int num_frame) {
 	// new vector containing remain edges
 	edges_remain->clear();
 
@@ -121,65 +89,71 @@ void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges,
 	vector<edge>* edges_remain5 = new vector<edge>();
 	vector<edge>* edges_remain6 = new vector<edge>();
 	vector<edge>* edges_remain7 = new vector<edge>();
-//	int sfpxl_num = width * height; // single frame pixel number
+	int upxl_num = num_frame * width * height; // unit (10 frames) pixel number
+
+	// ----- edge number
+	int num_edges_plane = (width - 1) * (height - 1) * 2 + width * (height - 1) + (width - 1) * height;
+        int num_edges_layer = (width - 2) * (height - 2) * 9 + (width - 2) * 2 * 6 + (height - 2) * 2 * 6 + 4 * 4;
+        int num_edges = num_edges_plane * num_frame + num_edges_layer * (num_frame - 1);
+	//
         #pragma omp parallel private(th_id) 
 	{
   	  th_id = omp_get_thread_num();
           switch(th_id) {
             case 0: 
             {
-	      int num0 = 0;
-              edge *edges0 = new edge[width*height*4];
-              gb(mess, smooth_r[0], smooth_g[0], smooth_b[0], width, height, edges0, c, 0, width*height, level, edges_remain0, num0);
+//	      int num0 = 0;
+              edge *edges0 = new edge[num_edges];
+              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges0, c, 0, upxl_num, level, edges_remain0, num_edges, num_frame);
             }
 	    break;
             case 1: 
             {
-	      int num1 = 0;
-              edge *edges1 = new edge[width*height*4];
-              gb(mess, smooth_r[1], smooth_g[1], smooth_b[1], width, height, edges1, c, width*height, 2*width*height, level, edges_remain1, num1);            
+//	      int num1 = 0;
+              edge *edges1 = new edge[num_edges];
+              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges1, c, upxl_num, 2*upxl_num, level, edges_remain1, num_edges, num_frame);            
             }
             break;
             case 2: 
        	    {
-	      int num2 = 0;
- 	      edge *edges2 = new edge[width*height*4];
-	      gb(mess, smooth_r[2], smooth_g[2], smooth_b[2], width, height, edges2, c, 2*width*height, 3*width*height, level, edges_remain2, num2);            
+//	      int num2 = 0;
+ 	      edge *edges2 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges2, c, 2*upxl_num, 3*upxl_num, level, edges_remain2, num_edges, num_frame);            
             }
             break;
             case 3: 
             {
-	      int num3 = 0;
-	      edge *edges3 = new edge[width*height*4];
-	      gb(mess, smooth_r[3], smooth_g[3], smooth_b[3], width, height, edges3, c, 3*width*height, 4*width*height, level, edges_remain3, num3);            
+//	      int num3 = 0;
+	      edge *edges3 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges3, c, 3*upxl_num, 4*upxl_num, level, edges_remain3, num_edges, num_frame);            
             }
             break;
             case 4: 
             {
-	      int num4 = 0;
-	      edge *edges4 = new edge[width*height*4];
-	      gb(mess, smooth_r[4], smooth_g[4], smooth_b[4], width, height, edges4, c, 4*width*height, 5*width*height, level, edges_remain4, num4);            
+//	      int num4 = 0;
+	      edge *edges4 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges4, c, 4*upxl_num, 5*upxl_num, level, edges_remain4, num_edges, num_frame);            
             }
       	    break;
             case 5: 
             {
-	      int num5 = 0;
-	      edge *edges5 = new edge[width*height*4];
-              gb(mess, smooth_r[5], smooth_g[5], smooth_b[5], width, height, edges5, c, 5*width*height, 6*width*height, level, edges_remain5, num5);            
+//	      int num5 = 0;
+	      edge *edges5 = new edge[num_edges];
+              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges5, c, 5*upxl_num, 6*upxl_num, level, edges_remain5, num_edges, num_frame);            
 	    }
             break;
             case 6: 
             {
-	      int num6 = 0;
-	      edge *edges6 = new edge[width*height*4];
-	      gb(mess, smooth_r[6], smooth_g[6], smooth_b[6], width, height, edges6, c, 6*width*height, 7*width*height, level, edges_remain6, num6);            
+//	      int num6 = 0;
+	      edge *edges6 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges6, c, 6*upxl_num, 7*upxl_num, level, edges_remain6, num_edges, num_frame);            
        	    }
        	    break;
       	    case 7: 
        	    {
-	      int num7 = 0;
-	      edge *edges7 = new edge[width*height*4];
-	      gb(mess, smooth_r[7], smooth_g[7], smooth_b[7], width, height, edges7, c, 7*width*height, 8*width*height, level, edges_remain7, num7);            
+//	      int num7 = 0;
+	      edge *edges7 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges7, c, 7*upxl_num, 8*upxl_num, level, edges_remain7, num_edges, num_frame);            
        	    }
        	    break;
      

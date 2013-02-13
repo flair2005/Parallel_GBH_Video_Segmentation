@@ -42,24 +42,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 #include "disjoint-set.h"
 
 using namespace std;
-/*
-// random color
-rgb random_rgb() {
-	rgb c;
-	c.r = (uchar) random();
-	c.g = (uchar) random();
-	c.b = (uchar) random();
-	return c;
-}*/
-/*
-// dissimilarity measure between pixels
-static inline float diff(image<float> *r, image<float> *g, image<float> *b,
-                          int x1, int y1, int x2, int y2) {
-  return sqrt(square(imRef(r, x1, y1)-imRef(r, x2, y2)) +
-              square(imRef(g, x1, y1)-imRef(g, x2, y2)) +
-              square(imRef(b, x1, y1)-imRef(b, x2, y2)));
-}
-*/
 
 /* Gaussian Smoothing */
 void smooth_images(image<rgb> *im[], int num_frame, image<float> *smooth_r[],
@@ -183,8 +165,8 @@ void segment_image(char *path, image<rgb> *im[], int num_frame, float c,
 	// step 5 -- over-segmentation
 	printf("start over-segmentation\n");
 	edges_region[0] = new vector<edge>();
-	segment_graph(mess, edges_region[0], edges, num_edges, c, width, height, 0,
-                      smooth_r, smooth_g, smooth_b);
+	segment_graph(mess, edges_region[0], edges, c, width, height, 0,
+                      smooth_r, smooth_g, smooth_b, 10);
 	// optional merging small components
 /*	for (int i = 0; i < num_edges; i++) {
 		int a = mess->find_in_level(edges[i].a, 0);
@@ -198,20 +180,6 @@ void segment_image(char *path, image<rgb> *im[], int num_frame, float c,
 	// ------------------------------------------------------------------
 */
 
-//	for (int it = 0; it < width * height; it++) 
-//	  printf("%d ", mess->get_size(it));
-//	for (int it = width * height; it < 2 * width * height; it++) 
-//	  printf("%d ", mess->find_in_level(it, 0));
-//        printf("\n");
-//	float max_mst = 0;
-//        for (int it = 0; it < num_frame * width * height; it++) {
-//          if (max_mst < mess->get_mst(it))
-//            max_mst = mess->get_mst(it);
-//        }
-//        printf("Maximum mst is %f.\n", max_mst);        
-//	for (int it = width * height; it < 2 * width * height; it++) 
-//	  printf("%f ", mess->get_mst(it));
-//        printf("\n");
 	// step 6 -- hierarchical segmentation
 	for (int i = 0; i < hie_num; i++) {
 		printf("level = %d\n", i);
@@ -225,14 +193,7 @@ void segment_image(char *path, image<rgb> *im[], int num_frame, float c,
 		printf("start fill edge weight\n");
 		fill_edge_weight(*edges_region[i], mess, i);
 		printf("end fill edge weight\n");
-/*
-         	int max_size = 0;
-	        for (int it = 0; it < num_frame * width * height; it++) {
-	          if (max_size < mess->get_size(it))
-	            max_size = mess->get_size(it);
-		}
-	        printf("Maximum size is %d.\n", max_size);        
-*/
+
 		printf("start segment graph region\n");
 		edges_region[i + 1] = new vector<edge>();
 		segment_graph_region(mess, edges_region[i + 1], edges_region[i], c_reg, i + 1);
