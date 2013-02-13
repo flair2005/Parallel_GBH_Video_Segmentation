@@ -169,7 +169,11 @@ void segment_image(char *path, image<rgb> *im[], int num_frame, float c,
 	printf("start over-segmentation\n");
 	edges_region[0] = new vector<edge>();
 	segment_graph(mess, edges_region[0], edges, c, width, height, 0,
+<<<<<<< HEAD
                       smooth_r, smooth_g, smooth_b, num_frame/num_cores, path);
+=======
+                      smooth_r, smooth_g, smooth_b, 10);
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
 	// optional merging small components
 /*	for (int i = 0; i < num_edges; i++) {
 		int a = mess->find_in_level(edges[i].a, 0);

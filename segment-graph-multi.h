@@ -56,6 +56,7 @@ static inline float diff(image<float> *r, image<float> *g, image<float> *b,
               square(imRef(b, x1, y1)-imRef(b, x2, y2)));
 }
 
+<<<<<<< HEAD
 /* Save Output for oversegmentation*/
 void generate_output_s(char *path, int num_frame, int width, int height,
                  universe_s *u, int num_vertices, int case_num) {
@@ -84,6 +85,19 @@ void generate_output_s(char *path, int num_frame, int width, int height,
         
         delete[] colors;
         delete[] output;
+=======
+// process every image with graph-based segmentation
+void gb(universe *mess, image<float> *smooth_r[], image<float> *smooth_g[], image<float> *smooth_b[],
+        int width, int height, edge *edges, float c, int s_index, int e_index, int level, 
+        vector<edge>* edges_remain, int num_edges, int num_frame) {
+  //int num = 0;
+  // ----- node number
+  int num_vertices = num_frame * width * height;
+//  edge_s *edges = new edge_s[width*height*4];
+  initialize_edges(edges, num_frame, width, height, smooth_r, smooth_g, smooth_b);
+
+  universe_s *u = segment_graph_s(num_vertices, num_edges, edges, c, edges_remain);
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
  
 }
 
@@ -112,12 +126,17 @@ void gb(universe *mess, image<float> *smooth_r[], image<float> *smooth_g[], imag
 
 /* pixel level minimum spanning tree merge */
 void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges, float c, int width, int height, int level,
+<<<<<<< HEAD
                 image<float> *smooth_r[], image<float> *smooth_g[], image<float> *smooth_b[], int num_frame, char *path) {
+=======
+                image<float> *smooth_r[], image<float> *smooth_g[], image<float> *smooth_b[], int num_frame) {
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
 	// new vector containing remain edges
 	edges_remain->clear();
 
 	printf("Start segmenting graph in parallel.\n");
 	int th_id;
+<<<<<<< HEAD
 	vector<edge>* edges_remain0 = new vector<edge>();  universe_s* u0 = new universe_s(num_frame * width * height);
 	vector<edge>* edges_remain1 = new vector<edge>();  universe_s* u1 = new universe_s(num_frame * width * height);
 	vector<edge>* edges_remain2 = new vector<edge>();  universe_s* u2 = new universe_s(num_frame * width * height);
@@ -137,71 +156,137 @@ void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges, floa
 //        printf("The unit edge number is %d.\n", num_edges);
 //        printf("The frame number is %d.\n", num_frame);	
         #pragma omp parallel private(th_id)  
+=======
+	vector<edge>* edges_remain0 = new vector<edge>();
+	vector<edge>* edges_remain1 = new vector<edge>();
+	vector<edge>* edges_remain2 = new vector<edge>();
+	vector<edge>* edges_remain3 = new vector<edge>();
+	vector<edge>* edges_remain4 = new vector<edge>();
+	vector<edge>* edges_remain5 = new vector<edge>();
+	vector<edge>* edges_remain6 = new vector<edge>();
+	vector<edge>* edges_remain7 = new vector<edge>();
+	int upxl_num = num_frame * width * height; // unit (10 frames) pixel number
+
+	// ----- edge number
+	int num_edges_plane = (width - 1) * (height - 1) * 2 + width * (height - 1) + (width - 1) * height;
+        int num_edges_layer = (width - 2) * (height - 2) * 9 + (width - 2) * 2 * 6 + (height - 2) * 2 * 6 + 4 * 4;
+        int num_edges = num_edges_plane * num_frame + num_edges_layer * (num_frame - 1);
+	//
+        #pragma omp parallel private(th_id) 
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
 	{
   	  th_id = omp_get_thread_num();
           switch(th_id) {
             case 0: 
             {
+<<<<<<< HEAD
 //	      int case_num0 = 0;
               edge *edges0 = new edge[num_edges];
               gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges0, u0, c, 0, level, edges_remain0, num_edges, num_frame);
 	      delete[] edges0;
+=======
+//	      int num0 = 0;
+              edge *edges0 = new edge[num_edges];
+              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges0, c, 0, upxl_num, level, edges_remain0, num_edges, num_frame);
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
             }
 	    break;
             case 1: 
             {
+<<<<<<< HEAD
 //	      int case_num1 = 1;
               edge *edges1 = new edge[num_edges];
               gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges1, u1, c, 1, level, edges_remain1, num_edges, num_frame);            
 	      delete[] edges1;
+=======
+//	      int num1 = 0;
+              edge *edges1 = new edge[num_edges];
+              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges1, c, upxl_num, 2*upxl_num, level, edges_remain1, num_edges, num_frame);            
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
             }
             break;
             case 2: 
        	    {
+<<<<<<< HEAD
 //	      int case_num2 = 2;
  	      edge *edges2 = new edge[num_edges];
 	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges2, u2, c, 2, level, edges_remain2, num_edges, num_frame);            
 	      delete[] edges2;
+=======
+//	      int num2 = 0;
+ 	      edge *edges2 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges2, c, 2*upxl_num, 3*upxl_num, level, edges_remain2, num_edges, num_frame);            
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
             }
             break;
             case 3: 
             {
+<<<<<<< HEAD
 //	      int case_num3 = 3;
 	      edge *edges3 = new edge[num_edges];
 	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges3, u3, c, 3, level, edges_remain3, num_edges, num_frame);            
 	      delete[] edges3;
+=======
+//	      int num3 = 0;
+	      edge *edges3 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges3, c, 3*upxl_num, 4*upxl_num, level, edges_remain3, num_edges, num_frame);            
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
             }
             break;
             case 4: 
             {
+<<<<<<< HEAD
 //	      int case_num4 = 4;
 	      edge *edges4 = new edge[num_edges];
 	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges4, u4, c, 4, level, edges_remain4, num_edges, num_frame);            
 	      delete[] edges4;
+=======
+//	      int num4 = 0;
+	      edge *edges4 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges4, c, 4*upxl_num, 5*upxl_num, level, edges_remain4, num_edges, num_frame);            
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
             }
       	    break;
             case 5: 
             {
+<<<<<<< HEAD
 //	      int case_num5 = 5;
 	      edge *edges5 = new edge[num_edges];
               gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges5, u5, c, 5, level, edges_remain5, num_edges, num_frame);            
 	      delete[] edges5;
+=======
+//	      int num5 = 0;
+	      edge *edges5 = new edge[num_edges];
+              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges5, c, 5*upxl_num, 6*upxl_num, level, edges_remain5, num_edges, num_frame);            
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
 	    }
             break;
             case 6: 
             {
+<<<<<<< HEAD
 //	      int case_num6 = 6;
 	      edge *edges6 = new edge[num_edges];
 	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges6, u6, c, 6, level, edges_remain6, num_edges, num_frame);            
 	      delete[] edges6;
+=======
+//	      int num6 = 0;
+	      edge *edges6 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges6, c, 6*upxl_num, 7*upxl_num, level, edges_remain6, num_edges, num_frame);            
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
        	    }
        	    break;
       	    case 7: 
        	    {
+<<<<<<< HEAD
 //	      int case_num7 = 7;
 	      edge *edges7 = new edge[num_edges];
 	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges7, u7, c, 7, level, edges_remain7, num_edges, num_frame);            
 	      delete[] edges7;
+=======
+//	      int num7 = 0;
+	      edge *edges7 = new edge[num_edges];
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges7, c, 7*upxl_num, 8*upxl_num, level, edges_remain7, num_edges, num_frame);            
+>>>>>>> ad040b82f8999f8b7b7a103a7b1bff90e937466a
        	    }
        	    break;
      
