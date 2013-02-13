@@ -56,9 +56,40 @@ static inline float diff(image<float> *r, image<float> *g, image<float> *b,
               square(imRef(b, x1, y1)-imRef(b, x2, y2)));
 }
 
+/* Save Output for oversegmentation*/
+void generate_output_s(char *path, int num_frame, int width, int height,
+                 universe_s *u, int num_vertices, int case_num) {
+	int offset = case_num * num_frame; 
+        char savepath[1024];
+        image<rgb>** output = new image<rgb>*[num_frame];
+        rgb* colors = new rgb[num_vertices];
+        for (int i = 0; i < num_vertices; i++)
+               colors[i] = random_rgb();
+ 
+        // write out the ppm files.
+        int k = 0;
+        for (int i = 0; i < num_frame; i++) {
+               snprintf(savepath, 1023, "%s/%02d/%05d.ppm", path, k, i + offset + 1);
+               output[i] = new image<rgb>(width, height);
+               for (int y = 0; y < height; y++) {
+                      for (int x = 0; x < width; x++) {
+                             int comp = u->find(y * width + x + i * (width * height));
+                             imRef(output[i], x, y) = colors[comp];
+                      }
+               }
+               savePPM(output[i], savepath);
+        }
+        for (int i = 0; i < num_frame; i++)
+               delete output[i];
+        
+        delete[] colors;
+        delete[] output;
+ 
+}
+
 // process every image with graph-based segmentation
 void gb(universe *mess, image<float> *smooth_r[], image<float> *smooth_g[], image<float> *smooth_b[],
-        int width, int height, edge *edges, float c, int case_num, int level, 
+        int width, int height, edge *edges, universe_s *u, float c, int case_num, int level, 
         vector<edge>* edges_remain, int num_edges, int num_frame) {
   
 //   printf("The frame number is %d and case number is %d.\n", num_frame, case_num);	
@@ -70,7 +101,7 @@ void gb(universe *mess, image<float> *smooth_r[], image<float> *smooth_g[], imag
   initialize_edges(edges, num_frame, width, height, smooth_r, smooth_g, smooth_b, case_num);
 //  printf("Finished edge initialization.\n");
 
-  universe_s *u = segment_graph_s(num_vertices, num_edges, edges, c, edges_remain);
+  u = segment_graph_s(num_vertices, num_edges, edges, c, edges_remain);
 //  printf("Finished unit graph segmentation.\n"); 
 
   for (int i = s_index; i < e_index; ++i) 
@@ -81,21 +112,23 @@ void gb(universe *mess, image<float> *smooth_r[], image<float> *smooth_g[], imag
 
 /* pixel level minimum spanning tree merge */
 void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges, float c, int width, int height, int level,
-                image<float> *smooth_r[], image<float> *smooth_g[], image<float> *smooth_b[], int num_frame) {
+                image<float> *smooth_r[], image<float> *smooth_g[], image<float> *smooth_b[], int num_frame, char *path) {
 	// new vector containing remain edges
 	edges_remain->clear();
 
 	printf("Start segmenting graph in parallel.\n");
 	int th_id;
-	vector<edge>* edges_remain0 = new vector<edge>();
-	vector<edge>* edges_remain1 = new vector<edge>();
-	vector<edge>* edges_remain2 = new vector<edge>();
-	vector<edge>* edges_remain3 = new vector<edge>();
-	vector<edge>* edges_remain4 = new vector<edge>();
-	vector<edge>* edges_remain5 = new vector<edge>();
-	vector<edge>* edges_remain6 = new vector<edge>();
-	vector<edge>* edges_remain7 = new vector<edge>();
+	vector<edge>* edges_remain0 = new vector<edge>();  universe_s* u0 = new universe_s(num_frame * width * height);
+	vector<edge>* edges_remain1 = new vector<edge>();  universe_s* u1 = new universe_s(num_frame * width * height);
+	vector<edge>* edges_remain2 = new vector<edge>();  universe_s* u2 = new universe_s(num_frame * width * height);
+	vector<edge>* edges_remain3 = new vector<edge>();  universe_s* u3 = new universe_s(num_frame * width * height);
+	vector<edge>* edges_remain4 = new vector<edge>();  universe_s* u4 = new universe_s(num_frame * width * height);
+	vector<edge>* edges_remain5 = new vector<edge>();  universe_s* u5 = new universe_s(num_frame * width * height);
+	vector<edge>* edges_remain6 = new vector<edge>();  universe_s* u6 = new universe_s(num_frame * width * height);
+	vector<edge>* edges_remain7 = new vector<edge>();  universe_s* u7 = new universe_s(num_frame * width * height);
 //	int upxl_num = num_frame * width * height; // unit (10 frames) pixel number
+  	// ----- node number
+  	int num_vertices = num_frame * width * height;
 
 	// ----- edge number for 1 unit which has 10 video clips
 	int num_edges_plane = (width - 1) * (height - 1) * 2 + width * (height - 1) + (width - 1) * height;
@@ -109,65 +142,65 @@ void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges, floa
           switch(th_id) {
             case 0: 
             {
-	      int case_num0 = 0;
+//	      int case_num0 = 0;
               edge *edges0 = new edge[num_edges];
-              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges0, c, case_num0, level, edges_remain0, num_edges, num_frame);
+              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges0, u0, c, 0, level, edges_remain0, num_edges, num_frame);
 	      delete[] edges0;
             }
 	    break;
             case 1: 
             {
-	      int case_num1 = 1;
+//	      int case_num1 = 1;
               edge *edges1 = new edge[num_edges];
-              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges1, c, case_num1, level, edges_remain1, num_edges, num_frame);            
+              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges1, u1, c, 1, level, edges_remain1, num_edges, num_frame);            
 	      delete[] edges1;
             }
             break;
             case 2: 
        	    {
-	      int case_num2 = 2;
+//	      int case_num2 = 2;
  	      edge *edges2 = new edge[num_edges];
-	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges2, c, case_num2, level, edges_remain2, num_edges, num_frame);            
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges2, u2, c, 2, level, edges_remain2, num_edges, num_frame);            
 	      delete[] edges2;
             }
             break;
             case 3: 
             {
-	      int case_num3 = 3;
+//	      int case_num3 = 3;
 	      edge *edges3 = new edge[num_edges];
-	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges3, c, case_num3, level, edges_remain3, num_edges, num_frame);            
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges3, u3, c, 3, level, edges_remain3, num_edges, num_frame);            
 	      delete[] edges3;
             }
             break;
             case 4: 
             {
-	      int case_num4 = 4;
+//	      int case_num4 = 4;
 	      edge *edges4 = new edge[num_edges];
-	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges4, c, case_num4, level, edges_remain4, num_edges, num_frame);            
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges4, u4, c, 4, level, edges_remain4, num_edges, num_frame);            
 	      delete[] edges4;
             }
       	    break;
             case 5: 
             {
-	      int case_num5 = 5;
+//	      int case_num5 = 5;
 	      edge *edges5 = new edge[num_edges];
-              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges5, c, case_num5, level, edges_remain5, num_edges, num_frame);            
+              gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges5, u5, c, 5, level, edges_remain5, num_edges, num_frame);            
 	      delete[] edges5;
 	    }
             break;
             case 6: 
             {
-	      int case_num6 = 6;
+//	      int case_num6 = 6;
 	      edge *edges6 = new edge[num_edges];
-	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges6, c, case_num6, level, edges_remain6, num_edges, num_frame);            
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges6, u6, c, 6, level, edges_remain6, num_edges, num_frame);            
 	      delete[] edges6;
        	    }
        	    break;
       	    case 7: 
        	    {
-	      int case_num7 = 7;
+//	      int case_num7 = 7;
 	      edge *edges7 = new edge[num_edges];
-	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges7, c, case_num7, level, edges_remain7, num_edges, num_frame);            
+	      gb(mess, smooth_r, smooth_g, smooth_b, width, height, edges7, u7, c, 7, level, edges_remain7, num_edges, num_frame);            
 	      delete[] edges7;
        	    }
        	    break;
@@ -175,6 +208,17 @@ void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges, floa
        	    default: break;
 	  }
     	}
+	// output oversegmentation in level 0 of heirarchical system 
+        generate_output_s(path, num_frame, width, height, u0, num_vertices, 0); 
+        generate_output_s(path, num_frame, width, height, u1, num_vertices, 1); 
+        generate_output_s(path, num_frame, width, height, u2, num_vertices, 2); 
+        generate_output_s(path, num_frame, width, height, u3, num_vertices, 3); 
+        generate_output_s(path, num_frame, width, height, u4, num_vertices, 4); 
+        generate_output_s(path, num_frame, width, height, u5, num_vertices, 5); 
+        generate_output_s(path, num_frame, width, height, u6, num_vertices, 6); 
+        generate_output_s(path, num_frame, width, height, u7, num_vertices, 7); 
+
+	// transfter edges to edges_remian for first level hierarchical segmentation	
 	vector<edge>::iterator it;
         for ( it = edges_remain0->begin() ; it < edges_remain0->end(); it++ )
           edges_remain->push_back(*it); 
@@ -193,6 +237,12 @@ void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges, floa
         for ( it = edges_remain7->begin() ; it < edges_remain7->end(); it++ )
           edges_remain->push_back(*it); 
 	sort(edges_remain->begin(), edges_remain->end());
+
+	// clear temporary variables
+        delete edges_remain0; delete u0; delete edges_remain1; delete u1;
+        delete edges_remain2; delete u2; delete edges_remain3; delete u3;
+        delete edges_remain4; delete u4; delete edges_remain5; delete u5;
+        delete edges_remain6; delete u6; delete edges_remain7; delete u7;
 }
 	
 /* region graph level minimum spanning tree merge */

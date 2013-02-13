@@ -99,7 +99,8 @@ void generate_output(char *path, int num_frame, int width, int height,
 	// write out the ppm files.
 	for (int k = 0; k <= level_total; k++) {
 		for (int i = 0; i < num_frame; i++) {
-			snprintf(savepath, 1023, "%s/%02d/%05d.ppm", path, k, i + 1);
+			// output 1 higher level than them in GBH and replace k with k+1
+			snprintf(savepath, 1023, "%s/%02d/%05d.ppm", path, k+1, i + 1);
 			output[i] = new image<rgb>(width, height);
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
@@ -168,7 +169,7 @@ void segment_image(char *path, image<rgb> *im[], int num_frame, float c,
 	printf("start over-segmentation\n");
 	edges_region[0] = new vector<edge>();
 	segment_graph(mess, edges_region[0], edges, c, width, height, 0,
-                      smooth_r, smooth_g, smooth_b, num_frame/num_cores);
+                      smooth_r, smooth_g, smooth_b, num_frame/num_cores, path);
 	// optional merging small components
 /*	for (int i = 0; i < num_edges; i++) {
 		int a = mess->find_in_level(edges[i].a, 0);
