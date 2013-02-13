@@ -186,9 +186,6 @@ void segment_graph(universe *mess, vector<edge>* edges_remain, edge *edges,
        	    default: break;
 	  }
     	}
-//        for (int i = 0; i < num0; ++i) {
-//          edge *pedge = &edges0[i];
-//	}
 	vector<edge>::iterator it;
         for ( it = edges_remain0->begin() ; it < edges_remain0->end(); it++ )
           edges_remain->push_back(*it); 
@@ -215,7 +212,7 @@ void segment_graph_region(universe *mess, vector<edge>* edges_remain,
 	edges_remain->clear();
 	sort(edges_region->begin(), edges_region->end());
 //	printf("Finished edge region sorting.\n");
-	printf("Edge region size is %d.\n", (int)edges_region->size());
+//	printf("Edge region size is %d.\n", (int)edges_region->size());
 	for (int i=0; i < (int) edges_region->size(); i++) {
 //		printf("Operation+1\n");
 //		float max_w = 0;

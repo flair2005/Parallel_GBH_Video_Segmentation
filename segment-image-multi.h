@@ -225,14 +225,14 @@ void segment_image(char *path, image<rgb> *im[], int num_frame, float c,
 		printf("start fill edge weight\n");
 		fill_edge_weight(*edges_region[i], mess, i);
 		printf("end fill edge weight\n");
-
+/*
          	int max_size = 0;
 	        for (int it = 0; it < num_frame * width * height; it++) {
 	          if (max_size < mess->get_size(it))
 	            max_size = mess->get_size(it);
 		}
 	        printf("Maximum size is %d.\n", max_size);        
-
+*/
 		printf("start segment graph region\n");
 		edges_region[i + 1] = new vector<edge>();
 		segment_graph_region(mess, edges_region[i + 1], edges_region[i], c_reg, i + 1);
